@@ -5,6 +5,15 @@ using System;
 
 namespace MonoGameWindowsStarter
 {
+
+    public enum BlobState
+    {
+        North,
+        South,
+        East,
+        West
+    }
+
     /// <summary>
     /// This is the main type for your game.
     /// </summary>
@@ -12,8 +21,11 @@ namespace MonoGameWindowsStarter
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
-        Ball ball;
-        Paddle paddle;
+
+        BlobState state;
+        Color[] colors = { Color.Red, Color.Blue, Color.Blue, Color.Green, Color.Brown, Color.Bisque, Color.Tan, Color.Tomato, Color.Teal, Color.MediumTurquoise };
+        Color blobColor = Color.White;
+        Blob blob;
 
         public Random Random = new Random();
         
@@ -25,8 +37,9 @@ namespace MonoGameWindowsStarter
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
-            paddle = new Paddle(this);
-            ball = new Ball(this);
+
+            state = BlobState.North;
+            blob = new Blob(this);
         }
 
         /// <summary>
@@ -41,8 +54,7 @@ namespace MonoGameWindowsStarter
             graphics.PreferredBackBufferWidth = 1042;
             graphics.PreferredBackBufferHeight = 768;
             graphics.ApplyChanges();
-            ball.Initialize();
-            paddle.Initialize();
+            blob.Initialize();
             base.Initialize();
         }
 
@@ -54,8 +66,9 @@ namespace MonoGameWindowsStarter
         {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
-            ball.LoadContent(Content);
-            paddle.LoadContent(Content);
+
+            blob.LoadContent(Content);
+
         }
 
         /// <summary>
@@ -82,17 +95,34 @@ namespace MonoGameWindowsStarter
             if (newKeyboardState.IsKeyDown(Keys.Escape))
                 Exit();
 
-            paddle.Update(gameTime);
-            ball.Update(gameTime);
+            // TODO: every time you hit any other key (alphas?) do this transform thing
+            if (newKeyboardState.IsKeyDown(Keys.Space) && !oldKeyboardState.IsKeyDown(Keys.Space))
+            {
+                blobColor = colors[Random.Next(colors.Length)];
+                switch (state)
+                {
+                    case BlobState.North:
+                        state = BlobState.East;
+                        break;
 
-            if(paddle.Bounds.CollidesWith(ball.Bounds)) {
-                ball.Velocity.X *= -1;
-                var delta =  (paddle.Bounds.X + paddle.Bounds.Width) - (ball.Bounds.X - ball.Bounds.Radius);
-                ball.Bounds.X += 2*delta;
-                paddle.BounceSFX.Play();
+                    case BlobState.South:
+                        state = BlobState.West;
+                        break;
+
+                    case BlobState.East:
+                        state = BlobState.South;
+                        break;
+
+                    case BlobState.West:
+                        state = BlobState.North;
+                        break;
+
+                    default:
+                        state = BlobState.North;
+                        break;
+                }
             }
 
-            // TODO: Add your update logic here
 
             oldKeyboardState = newKeyboardState;
             base.Update(gameTime);
@@ -104,15 +134,12 @@ namespace MonoGameWindowsStarter
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.CornflowerBlue);
+            GraphicsDevice.Clear(Color.Black);
 
-            // TODO: Add your drawing code here
-            spriteBatch.Begin();
-
-            ball.Draw(spriteBatch);
-            paddle.Draw(spriteBatch);
-            
-            spriteBatch.End();
+            // TODO: set a transformation matrix based on blob state
+            // choose random color
+           
+            blob.Draw(spriteBatch, blobColor, state);
 
             base.Draw(gameTime);
         }
